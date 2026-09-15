@@ -69,6 +69,7 @@ const load = (p) => (0, eval)(fs.readFileSync(p, "utf8"));
 load(path.join(VENDOR, "react.js"));
 load(path.join(VENDOR, "react-dom-server.js"));
 load(path.join(VENDOR, "htm.js"));
+load(path.join(root, "ui/sha256.js"));
 load(path.join(root, "ui/data.js"));
 load(path.join(root, "ui/engine.js"));
 

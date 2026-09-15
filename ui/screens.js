@@ -110,7 +110,7 @@ export function Workspace({ state, dispatch }) {
           placeholder="Search for anyone by name or skill…"
           aria-label="Search the cohort"
           value=${query}
-          onInput=${(e) => setQuery(e.target.value)}
+          onChange=${(e) => setQuery(e.target.value)}
         />
         <div class="quick">
           <button
@@ -253,6 +253,16 @@ function PersonLine({ index, state, dispatch }) {
           ${howPlaced(r.tier[index], r.rank[index])}
           ${t === -1 ? "" : " · " + matchPct(E.score(index, t))}
         </span>
+        <span class="skills">
+          ${c.skills.length
+            ? c.skills.map(
+                (s) => html`<span
+                  class="mini ${t !== -1 && D.teams[t].required.indexOf(s) !== -1 ? "hit" : ""}"
+                  key=${s}
+                >${pretty(s)}</span>`
+              )
+            : html`<span class="mini none">no skills on file</span>`}
+        </span>
       </button>
     </div>
   `;
@@ -306,6 +316,10 @@ function TeamTile({ team, index, state, dispatch, expanded, onToggle, reviewSet 
             : "full"}
           ${needsReview ? html`<span class="flag">${needsReview} to check</span>` : null}
         </span>
+        <span class="tile-needs-mini">
+          <span class="lbl">wants</span>
+          ${team.required.map((s) => html`<span class="mini" key=${s}>${pretty(s)}</span>`)}
+        </span>
       </button>
 
       ${expanded
@@ -325,7 +339,17 @@ function TeamTile({ team, index, state, dispatch, expanded, onToggle, reviewSet 
                           key=${ci}
                           onClick=${() => dispatch({ type: "select", candidate: ci })}
                         >
-                          <span class="nm">${D.candidates[ci].name}</span>
+                          <span class="who">
+                            <span class="nm">${D.candidates[ci].name}</span>
+                            <span class="skills">
+                              ${D.candidates[ci].skills.map(
+                                (s) => html`<span
+                                  class="mini ${team.required.indexOf(s) !== -1 ? "hit" : ""}"
+                                  key=${s}
+                                >${pretty(s)}</span>`
+                              )}
+                            </span>
+                          </span>
                           <span class="meta">
                             <span class="how">${howPlacedShort(r.tier[ci], r.rank[ci])}</span>
                             <span class="pct">${matchPctShort(E.score(ci, index))}</span>
@@ -499,7 +523,7 @@ function IntakePanel({ state, dispatch, onClose }) {
   // which is exactly the "convenience over preference" outcome the tool
   // exists to prevent, so the panel asks for it explicitly.
   const [picks, setPicks] = useState([]);
-  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
 
   const parsed = useMemo(() => parseResume(text), [text]);
   const finalName = (name.trim() || parsed.name || "").trim();
@@ -510,11 +534,16 @@ function IntakePanel({ state, dispatch, onClose }) {
     );
   }
 
-  async function addToCohort() {
-    if (!finalName || busy) return;
-    setBusy(true);
+  function addToCohort() {
+    if (!finalName) {
+      setError("Enter a name first.");
+      return;
+    }
+    // Anything that goes wrong here has to be visible. An earlier version
+    // swallowed the failure in a try/finally, so the button simply did
+    // nothing and there was no way to tell why.
     try {
-      const index = await E.addCandidate({
+      const index = E.addCandidate({
         id: "N" + String(D.candidates.length + 1).padStart(3, "0"),
         name: finalName,
         skills: parsed.skills,
@@ -523,8 +552,8 @@ function IntakePanel({ state, dispatch, onClose }) {
       });
       dispatch({ type: "added", candidate: index });
       onClose();
-    } finally {
-      setBusy(false);
+    } catch (err) {
+      setError("Couldn’t add them: " + (err && err.message ? err.message : String(err)));
     }
   }
 
@@ -579,7 +608,7 @@ function IntakePanel({ state, dispatch, onClose }) {
                 id="intern-name"
                 placeholder=${parsed.name || "Their name"}
                 value=${name}
-                onInput=${(e) => setName(e.target.value)}
+                onChange=${(e) => setName(e.target.value)}
               />
 
               <label
@@ -593,7 +622,7 @@ function IntakePanel({ state, dispatch, onClose }) {
                 class="field"
                 id="resume-text"
                 value=${text}
-                onInput=${(e) => setText(e.target.value)}
+                onChange=${(e) => setText(e.target.value)}
                 spellcheck="false"
               ></textarea>
 
@@ -680,12 +709,8 @@ function IntakePanel({ state, dispatch, onClose }) {
               </div>
 
               <div class="sheet-actions">
-                <button
-                  class="btn primary"
-                  disabled=${!finalName || busy}
-                  onClick=${addToCohort}
-                >
-                  ${busy ? "Adding…" : "Add to the cohort"}
+                <button class="btn primary" disabled=${!finalName} onClick=${addToCohort}>
+                  Add to the cohort
                 </button>
                 <span class="note">
                   ${finalName
@@ -693,6 +718,7 @@ function IntakePanel({ state, dispatch, onClose }) {
                     : "Enter a name first."}
                 </span>
               </div>
+              ${error ? html`<p class="error-note">${error}</p>` : null}
             </div>
           </div>
         </div>

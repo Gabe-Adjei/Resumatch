@@ -89,32 +89,16 @@
 
   const tiebreak = {}; // "teamIdx:candIdx" -> hex digest
 
-  async function sha256Hex(text) {
-    const bytes = new TextEncoder().encode(text);
-    const digest = await crypto.subtle.digest("SHA-256", bytes);
-    return Array.from(new Uint8Array(digest))
-      .map(function (b) {
-        return b.toString(16).padStart(2, "0");
-      })
-      .join("");
-  }
-
-  async function ensureTiebreaks() {
-    const jobs = [];
+  function ensureTiebreaks() {
     for (let t = 0; t < D.teams.length; t++) {
       for (let c = 0; c < D.candidates.length; c++) {
         const key = t + ":" + c;
         if (tiebreak[key] !== undefined) continue;
-        jobs.push(
-          sha256Hex(D.matchSeed + "|" + D.teams[t].id + "|" + D.candidates[c].id).then(
-            function (hex) {
-              tiebreak[key] = hex;
-            }
-          )
+        tiebreak[key] = global.sha256Hex(
+          D.matchSeed + "|" + D.teams[t].id + "|" + D.candidates[c].id
         );
       }
     }
-    await Promise.all(jobs);
   }
 
   function rebuildOrders() {
@@ -137,11 +121,11 @@
   }
 
   /** Does the JS tie-break reproduce Python's ordering? Used by the parity check. */
-  async function verifyOrders() {
+  function verifyOrders() {
     const original = D.order.map(function (o) {
       return o.slice();
     });
-    await ensureTiebreaks();
+    ensureTiebreaks();
     rebuildOrders();
     const mismatches = [];
     for (let t = 0; t < D.teams.length; t++) {
@@ -161,7 +145,7 @@
    * `candidate` is {id, name, skills[], interests[], prefs[teamIdx]} — the
    * same shape as the entries in data.js.
    */
-  async function addCandidate(candidate) {
+  function addCandidate(candidate) {
     if (D.candidates.some((c) => c.id === candidate.id)) {
       throw new Error("a candidate with id " + candidate.id + " is already in the cohort");
     }
@@ -171,7 +155,7 @@
     for (let t = 0; t < D.teams.length; t++) {
       scoreCache[t][index] = fitScore(index, t).total;
     }
-    await ensureTiebreaks();
+    ensureTiebreaks();
     rebuildOrders();
     return index;
   }

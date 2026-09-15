@@ -23,6 +23,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 global.window = global;
 
+eval(fs.readFileSync(path.join(root, "ui/sha256.js"), "utf8"));
 eval(fs.readFileSync(path.join(root, "ui/data.js"), "utf8"));
 eval(fs.readFileSync(path.join(root, "ui/engine.js"), "utf8"));
 
