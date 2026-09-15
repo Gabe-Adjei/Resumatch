@@ -1,0 +1,17 @@
+# Generated artifacts. Everything here is reproducible from a seed:
+#   python3 -m resumatch generate --seed 42 -o data/cohort.json
+data/
+
+# React UMD builds used only by scripts/check_ui_render.js. The app itself
+# loads them from a CDN at runtime; the script prints fetch instructions.
+.vendor/
+
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
+venv/
+
+# ui/data.js IS committed on purpose — the published board needs it, and it
+# pins the exact team rankings the UI ships with. Regenerate it with
+# scripts/export_ui_data.py whenever scoring.py changes.

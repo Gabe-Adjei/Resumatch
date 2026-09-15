@@ -1,0 +1,5 @@
+id,name,capacity,domain_tags,required_skills,preferred_skills,wishlist
+T01,Onboarding Engineering,2,infra,ci_cd;docker;kubernetes,aws;terraform,C001;C009;C008;C002;C010
+T02,Liquidity Analytics,6,backend,python;rest_apis,microservices,C006;C013;C002;C012;C004
+T03,Custody Analytics,3,data_ml,data_engineering;machine_learning,nlp;pandas;statistics,C011;C005;C014;C012;C006
+T04,Liquidity Experience,3,backend,ci_cd;go;microservices;sql,java;python,C012;C005;C004;C014;C008

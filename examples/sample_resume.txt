@@ -1,0 +1,23 @@
+Priya Raman
+priya.raman@osu.edu | github.com/praman | Columbus, OH
+
+EDUCATION
+The Ohio State University — B.S. Computer Science & Engineering, expected 2027
+Relevant coursework: Distributed Systems, Databases, Machine Learning
+
+EXPERIENCE
+Software Engineering Intern — Acme Corp (Summer 2025)
+  Built REST APIs in Python and Go, backed by PostgreSQL, serving 40k daily requests.
+  Containerized six services with Docker and deployed them on Kubernetes.
+  Set up CI/CD with GitHub Actions, cutting deploy time from 25 minutes to 4.
+
+Undergraduate Research Assistant — OSU Systems Lab (2024-2025)
+  Instrumented a distributed key-value store and profiled tail latency.
+  Wrote data pipelines in Spark to process 2TB of trace logs.
+
+PROJECTS
+  Sentiment classifier using PyTorch, trained on 500k reviews.
+  Course scheduling tool in TypeScript and React.
+
+INTERESTS
+  Interested in backend and infrastructure work, especially platform reliability.

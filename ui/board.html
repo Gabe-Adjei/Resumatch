@@ -1,0 +1,1076 @@
+<title>Cohort Placement Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ---------------------------------------------------------------------------
+   Tokens. Every colour is declared in the bare :root first, then redefined
+   wholesale for dark. Cool graphite neutrals carry a slight teal bias so they
+   read as chosen rather than inherited; deep teal is the single accent.
+
+   Placement tiers get their own categorical scale, kept separate from the
+   accent. Tier is the page's core information — how someone got their seat —
+   so it has to be legible as colour at a glance, not only as text.
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #F1F4F4;
+  --surface: #FFFFFF;
+  --surface-2: #E8ECEC;
+  --surface-3: #DDE3E3;
+  --ink: #101718;
+  --ink-2: #3D4A4C;
+  --ink-3: #6D797B;
+  --line: #D3DADA;
+  --line-strong: #B4BFBF;
+  --accent: #0D5C63;
+  --accent-soft: #D7E8E9;
+  --accent-ink: #FFFFFF;
+
+  --t-top: #2F7A4F;
+  --t-top-bg: #DCEDE3;
+  --t-ranked: #2F6B7C;
+  --t-ranked-bg: #D8E8ED;
+  --t-fallback: #9A5F08;
+  --t-fallback-bg: #F3E5CD;
+  --t-pinned: #5E4392;
+  --t-pinned-bg: #E5DEF3;
+  --t-unplaced: #A5382A;
+  --t-unplaced-bg: #F5DBD7;
+
+  --radius: 6px;
+  --shadow: 0 1px 2px rgba(16, 23, 24, .07), 0 4px 12px rgba(16, 23, 24, .05);
+
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --display: "Archivo", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1213;
+    --surface: #141C1D;
+    --surface-2: #1C2628;
+    --surface-3: #263133;
+    --ink: #E9EEEE;
+    --ink-2: #AEBBBC;
+    --ink-3: #7B8A8C;
+    --line: #283436;
+    --line-strong: #3A4849;
+    --accent: #52B5AB;
+    --accent-soft: #123034;
+    --accent-ink: #06181A;
+
+    --t-top: #6CBE8B;
+    --t-top-bg: #14301F;
+    --t-ranked: #6FB4C6;
+    --t-ranked-bg: #102A31;
+    --t-fallback: #DCA34A;
+    --t-fallback-bg: #33260F;
+    --t-pinned: #A992D6;
+    --t-pinned-bg: #241C38;
+    --t-unplaced: #DD7C6B;
+    --t-unplaced-bg: #341915;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0C1213;
+  --surface: #141C1D;
+  --surface-2: #1C2628;
+  --surface-3: #263133;
+  --ink: #E9EEEE;
+  --ink-2: #AEBBBC;
+  --ink-3: #7B8A8C;
+  --line: #283436;
+  --line-strong: #3A4849;
+  --accent: #52B5AB;
+  --accent-soft: #123034;
+  --accent-ink: #06181A;
+
+  --t-top: #6CBE8B;
+  --t-top-bg: #14301F;
+  --t-ranked: #6FB4C6;
+  --t-ranked-bg: #102A31;
+  --t-fallback: #DCA34A;
+  --t-fallback-bg: #33260F;
+  --t-pinned: #A992D6;
+  --t-pinned-bg: #241C38;
+  --t-unplaced: #DD7C6B;
+  --t-unplaced-bg: #341915;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ---- shell -------------------------------------------------------------- */
+.shell { max-width: 1680px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 56px; }
+
+header.masthead {
+  display: flex; flex-wrap: wrap; align-items: flex-end;
+  justify-content: space-between; gap: 16px 28px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--line);
+}
+.masthead h1 {
+  font-family: var(--display); font-weight: 700; font-size: 25px;
+  letter-spacing: -.015em; margin: 0; text-wrap: balance;
+}
+.masthead .sub { color: var(--ink-3); margin: 3px 0 0; font-size: 13px; }
+.masthead .sub code { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn {
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--radius); padding: 7px 13px; font-size: 13px; font-weight: 500;
+  transition: background .12s, border-color .12s;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.1); }
+
+/* ---- readings ------------------------------------------------------------
+   A strip of instrument readings, not a hero. Sized so the whole board still
+   fits in the first frame; the numbers matter but the board is the page.     */
+.readings {
+  display: grid; gap: 1px; margin: 18px 0;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  background: var(--line); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+}
+.reading { background: var(--surface); padding: 11px 14px; }
+.reading .k {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--ink-3); font-weight: 600; white-space: nowrap;
+}
+.reading .v {
+  font-family: var(--mono); font-size: 22px; font-weight: 600;
+  font-variant-numeric: tabular-nums; margin-top: 3px; letter-spacing: -.02em;
+}
+.reading .d { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.reading .delta { font-family: var(--mono); font-size: 11.5px; font-weight: 600; }
+.delta.up { color: var(--t-top); }
+.delta.down { color: var(--t-unplaced); }
+
+/* The integrity reading is the product claim, so it gets the one lift. */
+.reading.integrity { background: var(--accent-soft); }
+.reading.integrity .v { color: var(--accent); font-size: 15px; padding-top: 5px; }
+.reading.integrity.broken { background: var(--t-unplaced-bg); }
+.reading.integrity.broken .v { color: var(--t-unplaced); }
+
+/* ---- change banner ------------------------------------------------------- */
+.banner {
+  display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--t-pinned);
+  border-radius: var(--radius); padding: 11px 14px; margin-bottom: 16px;
+}
+.banner .msg { flex: 1; min-width: 220px; font-size: 13px; }
+.banner strong { font-family: var(--mono); font-weight: 600; }
+
+/* ---- board layout -------------------------------------------------------- */
+.board { display: grid; grid-template-columns: 318px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 1020px) { .board { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.panel > h2 {
+  font-family: var(--display); font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2);
+  margin: 0; padding: 12px 14px 10px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.panel > h2 .count { font-family: var(--mono); color: var(--ink-3); font-weight: 500; }
+
+/* ---- candidate pool ------------------------------------------------------ */
+.pool-controls { padding: 10px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.pool-controls input[type="search"] {
+  width: 100%; font: inherit; font-size: 13px; padding: 7px 9px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink);
+}
+.filters { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2);
+  letter-spacing: .01em;
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.pool { max-height: 620px; overflow-y: auto; }
+.person {
+  display: grid; grid-template-columns: 4px 1fr auto; gap: 9px; align-items: center;
+  padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line);
+  cursor: grab; background: var(--surface); width: 100%; text-align: left;
+  border-left: 0; border-right: 0; border-top: 0;
+}
+.person:hover { background: var(--surface-2); }
+.person[aria-selected="true"] { background: var(--accent-soft); }
+.person:active { cursor: grabbing; }
+.person .stripe { align-self: stretch; border-radius: 0 2px 2px 0; }
+.person .who { min-width: 0; }
+.person .nm { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person .mt { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person .sc {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+  color: var(--ink-3); font-variant-numeric: tabular-nums; padding-right: 2px;
+}
+.person.dragging { opacity: .4; }
+
+/* ---- team grid ----------------------------------------------------------- */
+.teams { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
+.team {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); display: flex; flex-direction: column;
+  transition: border-color .12s, box-shadow .12s;
+}
+.team.drop-target { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.team.is-full.drop-target { border-color: var(--t-unplaced); box-shadow: 0 0 0 2px var(--t-unplaced-bg); }
+.team.highlight { border-color: var(--accent); }
+
+.team-head { padding: 10px 12px 9px; border-bottom: 1px solid var(--line); }
+.team-head .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.team-head h3 {
+  font-family: var(--display); font-size: 14px; font-weight: 600; margin: 0;
+  letter-spacing: -.005em; text-wrap: balance;
+}
+.team-head .cap {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap;
+}
+.team-head .needs { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
+.team-head .needs b { color: var(--ink-2); font-weight: 500; }
+
+/* Slot meter: one cell per seat. A team's fullness should read as shape
+   before it reads as a number — that is what a recruiter scans for. */
+.meter { display: flex; gap: 2px; margin-top: 7px; flex-wrap: wrap; }
+.slot { width: 12px; height: 5px; border-radius: 1px; background: var(--surface-3); }
+.slot.filled { background: var(--t-ranked); }
+.slot.pinned { background: var(--t-pinned); }
+.slot.demand { background: var(--t-fallback); }
+
+.members { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; min-height: 42px; }
+.member {
+  display: flex; align-items: center; gap: 6px; justify-content: space-between;
+  padding: 3px 6px; border-radius: 4px; font-size: 12.5px; background: transparent;
+  border: 0; width: 100%; text-align: left;
+}
+.member:hover { background: var(--surface-2); }
+.member[aria-selected="true"] { background: var(--accent-soft); }
+.member .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.member .tag {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+}
+.empty-slot { font-size: 11.5px; color: var(--ink-3); font-style: italic; padding: 3px 6px; }
+
+.cap-controls { display: flex; gap: 4px; align-items: center; }
+.cap-btn {
+  width: 20px; height: 20px; line-height: 1; padding: 0; border-radius: 4px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font-family: var(--mono); font-size: 13px; color: var(--ink-2);
+  display: grid; place-items: center;
+}
+.cap-btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--ink-3); }
+.cap-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+/* tier colouring, applied to stripes and tags alike */
+.tier-top_choice { background: var(--t-top); }
+.tier-ranked     { background: var(--t-ranked); }
+.tier-fallback   { background: var(--t-fallback); }
+.tier-pinned     { background: var(--t-pinned); }
+.tier-unplaced   { background: var(--t-unplaced); }
+.tag.tier-top_choice { background: var(--t-top-bg); color: var(--t-top); }
+.tag.tier-ranked     { background: var(--t-ranked-bg); color: var(--t-ranked); }
+.tag.tier-fallback   { background: var(--t-fallback-bg); color: var(--t-fallback); }
+.tag.tier-pinned     { background: var(--t-pinned-bg); color: var(--t-pinned); }
+.tag.tier-unplaced   { background: var(--t-unplaced-bg); color: var(--t-unplaced); }
+
+/* ---- legend -------------------------------------------------------------- */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 9px 12px; font-size: 11.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+/* ---- detail drawer ------------------------------------------------------- */
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%);
+  background: var(--surface); border-left: 1px solid var(--line-strong);
+  box-shadow: -8px 0 28px rgba(0, 0, 0, .12);
+  transform: translateX(100%); transition: transform .2s ease;
+  display: flex; flex-direction: column; z-index: 40;
+}
+.drawer.open { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) { .drawer { transition: none; } }
+
+.drawer-head {
+  padding: 14px 16px 12px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+}
+.drawer-head h2 { font-family: var(--display); font-size: 17px; margin: 0; letter-spacing: -.01em; }
+.drawer-head .id { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.drawer-body { padding: 14px 16px 28px; overflow-y: auto; flex: 1; }
+
+.dsec { margin-bottom: 18px; }
+.dsec h3 {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-3); font-weight: 600; margin: 0 0 7px;
+}
+.verdict { font-size: 14px; line-height: 1.55; margin: 0 0 10px; }
+.verdict b { font-weight: 600; }
+
+.rejlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.rejlist li {
+  font-size: 12.5px; padding: 8px 10px; background: var(--surface-2);
+  border-radius: 4px; border-left: 2px solid var(--line-strong);
+}
+.rejlist .t { font-weight: 600; }
+.rejlist .n { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.bars { display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: 116px 1fr 42px; gap: 8px; align-items: center; font-size: 12px; }
+.bar-track { height: 7px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+.bar-row .n { font-family: var(--mono); font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+.pillrow { display: flex; flex-wrap: wrap; gap: 4px; }
+.pill {
+  font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 3px;
+  background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line);
+}
+.pill.match { background: var(--t-top-bg); color: var(--t-top); border-color: transparent; }
+
+.ranklist { list-style: none; margin: 0; padding: 0; counter-reset: pref; }
+.ranklist li {
+  display: flex; gap: 8px; align-items: center; padding: 5px 0;
+  border-bottom: 1px solid var(--line); font-size: 12.5px;
+}
+.ranklist li:last-child { border-bottom: 0; }
+.ranklist .num {
+  font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-3);
+  width: 18px; flex: none;
+}
+.ranklist li.got { font-weight: 600; }
+.ranklist li.got .num { color: var(--accent); }
+
+.movebox { display: flex; gap: 6px; }
+.movebox select {
+  flex: 1; font: inherit; font-size: 13px; padding: 6px 8px; min-width: 0;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink);
+}
+
+.scrim {
+  position: fixed; inset: 0; background: rgba(8, 14, 15, .34);
+  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30;
+}
+.scrim.open { opacity: 1; pointer-events: auto; }
+
+.note { font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
+footer.foot {
+  margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line);
+  font-size: 11.5px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px 20px;
+}
+footer.foot code { font-family: var(--mono); }
+</style>
+
+<div class="shell">
+  <header class="masthead">
+    <div>
+      <h1>Cohort Placement Board</h1>
+      <p class="sub">
+        Summer 2026 tech cohort &middot; synthetic data &middot;
+        cohort <code id="cohort-hash">—</code> &middot; seed <code id="seed">—</code>
+      </p>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="undo" disabled>Undo</button>
+      <button class="btn" id="reset">Reset to algorithm</button>
+      <button class="btn primary" id="export">Export CSV</button>
+    </div>
+  </header>
+
+  <section class="readings" id="readings" aria-label="Cohort summary"></section>
+
+  <div id="banner-slot"></div>
+
+  <div class="board">
+    <section class="panel" aria-labelledby="pool-title">
+      <h2 id="pool-title">Cohort <span class="count" id="pool-count"></span></h2>
+      <div class="pool-controls">
+        <input type="search" id="search" placeholder="Search name or skill…" aria-label="Search the cohort">
+        <div class="filters" id="filters" role="group" aria-label="Filter by placement outcome"></div>
+      </div>
+      <div class="pool" id="pool"></div>
+      <div class="legend">
+        <span><i class="tier-top_choice"></i>1st choice</span>
+        <span><i class="tier-ranked"></i>Ranked</span>
+        <span><i class="tier-fallback"></i>Fallback</span>
+        <span><i class="tier-pinned"></i>Manual</span>
+      </div>
+    </section>
+
+    <section aria-label="Teams">
+      <div class="teams" id="teams"></div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <span>Candidate-proposing deferred acceptance (Gale&ndash;Shapley), capacities per team.</span>
+    <span>Rankings computed by <code>resumatch/scoring.py</code>.</span>
+    <span>Drag anyone onto a team to override; the board shows what it costs.</span>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Candidate detail">
+  <div class="drawer-head">
+    <div>
+      <h2 id="d-name">—</h2>
+      <div class="id" id="d-id"></div>
+    </div>
+    <button class="btn" id="d-close" aria-label="Close detail">Close</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+</aside>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const D = window.RESUMATCH_DATA;
+  const E = window.RESUMATCH;
+  const $ = function (id) { return document.getElementById(id); };
+
+  const TIER_LABEL = {
+    top_choice: "1st choice",
+    ranked: "ranked",
+    fallback: "fallback",
+    pinned: "manual",
+    unplaced: "unplaced"
+  };
+
+  function pretty(skill) { return skill.replace(/_/g, " "); }
+
+  // ---- state ---------------------------------------------------------------
+  // `baseline` is the untouched algorithmic result. Every override is measured
+  // against it, because the question a recruiter needs answered is not "what
+  // does the board say now" but "what did my change cost".
+  const state = {
+    capacities: D.teams.map(function (t) { return t.capacity; }),
+    pins: {},
+    history: [],
+    result: null,
+    baseline: null,
+    selected: null,
+    filter: "all",
+    query: "",
+    lastChange: null
+  };
+
+  // First-choice demand per team, for the oversubscription reading.
+  const demand = D.teams.map(function () { return 0; });
+  D.candidates.forEach(function (c) {
+    if (c.prefs.length) demand[c.prefs[0]]++;
+  });
+
+  function snapshot() {
+    state.history.push({
+      capacities: state.capacities.slice(),
+      pins: Object.assign({}, state.pins)
+    });
+    if (state.history.length > 40) state.history.shift();
+  }
+
+  function rerun() {
+    state.result = E.runMatch(state.capacities, state.pins);
+  }
+
+  // ---- readings ------------------------------------------------------------
+  function renderReadings() {
+    const m = state.result.metrics;
+    const b = state.baseline.metrics;
+    const touched = Object.keys(state.pins).length > 0 || capacitiesChanged();
+
+    function delta(now, was, digits) {
+      if (!touched) return "";
+      const d = now - was;
+      if (Math.abs(d) < 0.05) return '<span class="d">no change</span>';
+      const cls = d > 0 ? "up" : "down";
+      return '<span class="delta ' + cls + '">' + (d > 0 ? "+" : "") + d.toFixed(digits) + "</span>";
+    }
+
+    const stable = m.blockingPairs === 0;
+    const readings = [
+      {
+        k: "Placed",
+        v: m.placed + " / " + m.cohortSize,
+        d: m.unplaced ? m.unplaced + " unplaced" : "everyone has a seat"
+      },
+      {
+        k: "First choice",
+        v: m.firstChoicePct.toFixed(0) + "%",
+        d: delta(m.firstChoicePct, b.firstChoicePct, 1) || m.firstChoice + " interns"
+      },
+      {
+        k: "Top three",
+        v: m.topThreePct.toFixed(0) + "%",
+        d: delta(m.topThreePct, b.topThreePct, 1) || m.topThree + " interns"
+      },
+      {
+        k: "Mean rank",
+        v: m.meanRank.toFixed(2),
+        d: delta(m.meanRank, b.meanRank, 2) || "of choices they listed"
+      },
+      {
+        k: "Fallback",
+        v: String(m.fallback),
+        d: "none of their picks had room"
+      },
+      {
+        k: "Manual",
+        v: String(m.pinned),
+        d: m.pinned ? "overrides applied" : "no overrides"
+      },
+      {
+        k: "Integrity",
+        v: stable ? "STABLE" : m.blockingPairs + " blocking",
+        d: stable
+          ? "no swap both sides would take"
+          : "an override created a better swap",
+        cls: "integrity" + (stable ? "" : " broken")
+      }
+    ];
+
+    $("readings").innerHTML = readings.map(function (r) {
+      return '<div class="reading ' + (r.cls || "") + '">' +
+        '<div class="k">' + r.k + "</div>" +
+        '<div class="v">' + r.v + "</div>" +
+        '<div class="d">' + r.d + "</div>" +
+        "</div>";
+    }).join("");
+  }
+
+  function capacitiesChanged() {
+    return state.capacities.some(function (c, i) { return c !== D.teams[i].capacity; });
+  }
+
+  // ---- change banner -------------------------------------------------------
+  function renderBanner() {
+    const slot = $("banner-slot");
+    if (!state.lastChange) { slot.innerHTML = ""; return; }
+
+    const moved = state.lastChange.moved;
+    const worse = moved.filter(function (m) { return m.direction === "worse"; });
+    const improved = moved.filter(function (m) { return m.direction === "improved"; });
+
+    let detail;
+    if (!moved.length) {
+      detail = "Nobody else was affected.";
+    } else {
+      const names = worse.slice(0, 3).map(function (m) {
+        return D.candidates[m.candidate].name;
+      });
+      detail = moved.length + " other placement" + (moved.length === 1 ? "" : "s") + " shifted" +
+        (worse.length
+          ? " &mdash; <strong>" + worse.length + "</strong> got a worse outcome" +
+            (names.length ? " (" + names.join(", ") + (worse.length > names.length ? ", …" : "") + ")" : "")
+          : "") +
+        (improved.length ? ", " + improved.length + " improved" : "") + ".";
+    }
+
+    slot.innerHTML =
+      '<div class="banner">' +
+        '<div class="msg">' + state.lastChange.headline + " " + detail + "</div>" +
+        '<button class="btn" id="banner-dismiss">Dismiss</button>' +
+      "</div>";
+    $("banner-dismiss").onclick = function () {
+      state.lastChange = null;
+      renderBanner();
+    };
+  }
+
+  // ---- candidate pool ------------------------------------------------------
+  const FILTERS = [
+    ["all", "All"],
+    ["top_choice", "1st"],
+    ["ranked", "Ranked"],
+    ["fallback", "Fallback"],
+    ["pinned", "Manual"],
+    ["lowfit", "Low fit"]
+  ];
+
+  function renderFilters() {
+    $("filters").innerHTML = FILTERS.map(function (f) {
+      return '<button class="chip" data-filter="' + f[0] + '" aria-pressed="' +
+        (state.filter === f[0]) + '">' + f[1] + "</button>";
+    }).join("");
+    Array.prototype.forEach.call($("filters").children, function (el) {
+      el.onclick = function () {
+        state.filter = el.dataset.filter;
+        renderFilters();
+        renderPool();
+      };
+    });
+  }
+
+  function visibleCandidates() {
+    const r = state.result;
+    const lowFit = new Set(r.metrics.lowFit);
+    const q = state.query.trim().toLowerCase();
+
+    return D.candidates.map(function (c, i) { return i; }).filter(function (i) {
+      if (state.filter === "lowfit") { if (!lowFit.has(i)) return false; }
+      else if (state.filter !== "all" && r.tier[i] !== state.filter) return false;
+
+      if (!q) return true;
+      const c = D.candidates[i];
+      if (c.name.toLowerCase().indexOf(q) !== -1) return true;
+      if (c.id.toLowerCase().indexOf(q) !== -1) return true;
+      return c.skills.some(function (s) { return pretty(s).indexOf(q) !== -1; });
+    });
+  }
+
+  function renderPool() {
+    const r = state.result;
+    const list = visibleCandidates();
+    $("pool-count").textContent = list.length + " / " + D.candidates.length;
+
+    $("pool").innerHTML = list.map(function (i) {
+      const c = D.candidates[i];
+      const t = r.assignedTeam[i];
+      const tier = r.tier[i];
+      const teamName = t === -1 ? "Not placed" : D.teams[t].name;
+      const rank = r.rank[i] > 0 ? "#" + r.rank[i] : TIER_LABEL[tier];
+      const sc = t === -1 ? "—" : E.score(i, t).toFixed(2);
+      return '<button class="person" data-c="' + i + '" draggable="true" ' +
+        'aria-selected="' + (state.selected === i) + '">' +
+          '<span class="stripe tier-' + tier + '"></span>' +
+          '<span class="who">' +
+            '<span class="nm">' + c.name + "</span>" +
+            '<span class="mt">' + teamName + " &middot; " + rank + "</span>" +
+          "</span>" +
+          '<span class="sc">' + sc + "</span>" +
+        "</button>";
+    }).join("");
+
+    Array.prototype.forEach.call($("pool").children, function (el) {
+      const idx = Number(el.dataset.c);
+      el.onclick = function () { select(idx); };
+      el.addEventListener("dragstart", function (ev) {
+        ev.dataTransfer.setData("text/plain", String(idx));
+        ev.dataTransfer.effectAllowed = "move";
+        el.classList.add("dragging");
+      });
+      el.addEventListener("dragend", function () { el.classList.remove("dragging"); });
+    });
+  }
+
+  // ---- teams ---------------------------------------------------------------
+  function renderTeams() {
+    const r = state.result;
+    const container = $("teams");
+
+    container.innerHTML = D.teams.map(function (t, ti) {
+      const members = Array.from(r.rosters[ti]).sort(function (a, b) {
+        return E.score(b, ti) - E.score(a, ti);
+      });
+      const cap = state.capacities[ti];
+      const open = cap - members.length;
+      const changed = cap !== t.capacity;
+
+      const slots = [];
+      for (let s = 0; s < cap; s++) {
+        const who = members[s];
+        const cls = who === undefined ? "" :
+          (r.tier[who] === "pinned" ? " pinned" : " filled");
+        slots.push('<span class="slot' + cls + '"></span>');
+      }
+
+      const memberHtml = members.map(function (ci) {
+        const tier = r.tier[ci];
+        const label = r.rank[ci] > 0 ? "#" + r.rank[ci] : TIER_LABEL[tier];
+        return '<button class="member" data-c="' + ci + '" ' +
+          'aria-selected="' + (state.selected === ci) + '">' +
+          '<span class="nm">' + D.candidates[ci].name + "</span>" +
+          '<span class="tag tier-' + tier + '">' + label + "</span>" +
+          "</button>";
+      }).join("");
+
+      const emptyHtml = open > 0
+        ? '<div class="empty-slot">' + open + " open seat" + (open === 1 ? "" : "s") + "</div>"
+        : "";
+
+      return '<article class="team' + (members.length >= cap ? " is-full" : "") +
+        '" data-t="' + ti + '">' +
+        '<div class="team-head">' +
+          '<div class="row">' +
+            "<h3>" + t.name + "</h3>" +
+            '<span class="cap-controls">' +
+              '<button class="cap-btn" data-cap="-1" data-t="' + ti + '" ' +
+                'aria-label="Remove a slot from ' + t.name + '"' +
+                (cap <= members.length ? " disabled" : "") + ">&minus;</button>" +
+              '<span class="cap">' + members.length + "/" + cap +
+                (changed ? " *" : "") + "</span>" +
+              '<button class="cap-btn" data-cap="1" data-t="' + ti + '" ' +
+                'aria-label="Add a slot to ' + t.name + '">+</button>' +
+            "</span>" +
+          "</div>" +
+          '<div class="needs">needs <b>' +
+            t.required.map(pretty).join(", ") + "</b>" +
+            (demand[ti] ? " &middot; " + demand[ti] + " ranked it 1st" : "") +
+          "</div>" +
+          '<div class="meter">' + slots.join("") + "</div>" +
+        "</div>" +
+        '<div class="members">' + memberHtml + emptyHtml + "</div>" +
+      "</article>";
+    }).join("");
+
+    Array.prototype.forEach.call(container.querySelectorAll(".member"), function (el) {
+      el.onclick = function () { select(Number(el.dataset.c)); };
+    });
+    Array.prototype.forEach.call(container.querySelectorAll(".cap-btn"), function (el) {
+      el.onclick = function (ev) {
+        ev.stopPropagation();
+        changeCapacity(Number(el.dataset.t), Number(el.dataset.cap));
+      };
+    });
+    Array.prototype.forEach.call(container.querySelectorAll(".team"), function (el) {
+      const ti = Number(el.dataset.t);
+      el.addEventListener("dragover", function (ev) {
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = "move";
+        el.classList.add("drop-target");
+      });
+      el.addEventListener("dragleave", function () { el.classList.remove("drop-target"); });
+      el.addEventListener("drop", function (ev) {
+        ev.preventDefault();
+        el.classList.remove("drop-target");
+        const ci = Number(ev.dataTransfer.getData("text/plain"));
+        if (!Number.isNaN(ci)) pinTo(ci, ti);
+      });
+    });
+  }
+
+  // ---- mutations -----------------------------------------------------------
+  function applyChange(headline, mutate) {
+    const before = state.result;
+    snapshot();
+    mutate();
+    rerun();
+    state.lastChange = { headline: headline, moved: E.diff(before, state.result) };
+    render();
+  }
+
+  function pinTo(candIdx, teamIdx) {
+    const r = state.result;
+    if (r.assignedTeam[candIdx] === teamIdx && r.tier[candIdx] === "pinned") return;
+
+    const name = D.candidates[candIdx].name;
+    const teamName = D.teams[teamIdx].name;
+
+    // A pin cannot exceed capacity. Say so plainly and name the fix, rather
+    // than silently refusing the drag.
+    const pinnedHere = Object.keys(state.pins).filter(function (k) {
+      return state.pins[k] === teamIdx && Number(k) !== candIdx;
+    }).length;
+    if (pinnedHere + 1 > state.capacities[teamIdx]) {
+      state.lastChange = {
+        headline: teamName + " has " + state.capacities[teamIdx] + " slot" +
+          (state.capacities[teamIdx] === 1 ? "" : "s") +
+          " and they are all manually assigned, so " + name + " cannot be added.",
+        moved: []
+      };
+      renderBanner();
+      return;
+    }
+
+    applyChange(
+      "<strong>" + name + "</strong> moved to <strong>" + teamName + "</strong>.",
+      function () { state.pins[candIdx] = teamIdx; }
+    );
+  }
+
+  function unpin(candIdx) {
+    const name = D.candidates[candIdx].name;
+    applyChange(
+      "Override on <strong>" + name + "</strong> released; the algorithm placed them again.",
+      function () { delete state.pins[candIdx]; }
+    );
+  }
+
+  function changeCapacity(teamIdx, delta) {
+    const next = state.capacities[teamIdx] + delta;
+    if (next < 0) return;
+    const t = D.teams[teamIdx];
+    applyChange(
+      "<strong>" + t.name + "</strong> went from " + state.capacities[teamIdx] +
+        " to " + next + " slot" + (next === 1 ? "" : "s") + ".",
+      function () { state.capacities[teamIdx] = next; }
+    );
+  }
+
+  function undo() {
+    const prev = state.history.pop();
+    if (!prev) return;
+    const before = state.result;
+    state.capacities = prev.capacities;
+    state.pins = prev.pins;
+    rerun();
+    state.lastChange = { headline: "Reverted the last change.", moved: E.diff(before, state.result) };
+    render();
+  }
+
+  function reset() {
+    const before = state.result;
+    snapshot();
+    state.capacities = D.teams.map(function (t) { return t.capacity; });
+    state.pins = {};
+    rerun();
+    state.lastChange = {
+      headline: "Back to the algorithm's own result, overrides cleared.",
+      moved: E.diff(before, state.result)
+    };
+    render();
+  }
+
+  // ---- detail drawer -------------------------------------------------------
+  function select(candIdx) {
+    state.selected = candIdx;
+    renderDrawer();
+    renderPool();
+    renderTeams();
+    openDrawer(true);
+  }
+
+  function openDrawer(open) {
+    $("drawer").classList.toggle("open", open);
+    $("drawer").setAttribute("aria-hidden", String(!open));
+    $("scrim").classList.toggle("open", open);
+    if (!open) {
+      state.selected = null;
+      renderPool();
+      renderTeams();
+    }
+  }
+
+  function renderDrawer() {
+    const i = state.selected;
+    if (i === null) return;
+    const c = D.candidates[i];
+    const r = state.result;
+    const t = r.assignedTeam[i];
+    const tier = r.tier[i];
+
+    $("d-name").textContent = c.name;
+    $("d-id").textContent = c.id + " · " + c.interests.join(", ");
+
+    const teamName = t === -1 ? null : D.teams[t].name;
+    let verdict;
+    if (tier === "pinned") {
+      verdict = "<b>" + teamName + "</b> — placed here by a person, not by the algorithm." +
+        (r.rank[i] > 0 ? " It was their #" + r.rank[i] + " choice." :
+          " They had not ranked this team.");
+    } else if (tier === "top_choice") {
+      verdict = "<b>" + teamName + "</b> — their first choice.";
+    } else if (tier === "ranked") {
+      verdict = "<b>" + teamName + "</b> — their #" + r.rank[i] + " choice.";
+    } else if (tier === "fallback") {
+      verdict = "<b>" + teamName + "</b>. None of the " + c.prefs.length +
+        " teams they ranked had a seat left once every team filled its headcount.";
+    } else {
+      verdict = "Not placed — every team is at capacity.";
+    }
+
+    const rejections = (r.rejections[i] || []).slice().sort(function (a, b) {
+      return c.prefs.indexOf(a.team) - c.prefs.indexOf(b.team);
+    });
+
+    let html = '<div class="dsec"><h3>Outcome</h3><p class="verdict">' + verdict + "</p>";
+    if (tier !== "unplaced" && tier !== "pinned") {
+      html += '<p class="note">No team they ranked above this one would have taken them ' +
+        "over someone it actually placed. That is what makes the result defensible.</p>";
+    }
+    if (tier === "pinned") {
+      html += '<p class="note">Manual overrides are recorded separately from algorithmic ' +
+        "placements, so this stays visible as a human decision.</p>";
+    }
+    html += "</div>";
+
+    if (rejections.length) {
+      html += '<div class="dsec"><h3>Teams that could not take them</h3><ul class="rejlist">' +
+        rejections.map(function (rej) {
+          return "<li><span class='t'>" + D.teams[rej.team].name + "</span><br>" +
+            "<span class='n'>filled with " + rej.heldAbove +
+            " candidate" + (rej.heldAbove === 1 ? "" : "s") + " it scored higher · " +
+            "their fit " + rej.yourScore.toFixed(2) +
+            (rej.cutoff !== null ? " vs cutoff " + rej.cutoff.toFixed(2) : "") +
+            "</span></li>";
+        }).join("") + "</ul></div>";
+    }
+
+    if (t !== -1) {
+      const f = E.fitScore(i, t);
+      const rows = [
+        ["Required skills", f.required],
+        ["Preferred skills", f.preferred],
+        ["Interest overlap", f.interest],
+        ["Manager wishlist", f.wishlist]
+      ];
+      html += '<div class="dsec"><h3>Fit with ' + teamName +
+        " &middot; " + f.total.toFixed(2) + "</h3>";
+      if (f.total === 0) {
+        html += '<p class="note">Their skills do not overlap with this team\'s stated ' +
+          "requirements. They are here because the team still had headcount when their " +
+          "higher choices filled. Worth a word with the manager before this is final.</p>";
+      }
+      html += '<div class="bars">' + rows.map(function (row) {
+        return '<div class="bar-row"><span>' + row[0] + "</span>" +
+          '<span class="bar-track"><span class="bar-fill" style="width:' +
+          (row[1] * 100).toFixed(0) + '%"></span></span>' +
+          '<span class="n">' + (row[1] * 100).toFixed(0) + "%</span></div>";
+      }).join("") + "</div></div>";
+
+      const req = D.teams[t].required;
+      html += '<div class="dsec"><h3>Skills</h3><div class="pillrow">' +
+        c.skills.map(function (s) {
+          return '<span class="pill' + (req.indexOf(s) !== -1 ? " match" : "") + '">' +
+            pretty(s) + "</span>";
+        }).join("") + "</div></div>";
+    }
+
+    if (c.prefs.length) {
+      html += '<div class="dsec"><h3>What they asked for</h3><ol class="ranklist">' +
+        c.prefs.map(function (ti, n) {
+          const got = ti === t;
+          return "<li class='" + (got ? "got" : "") + "'>" +
+            '<span class="num">' + (n + 1) + "</span>" +
+            "<span>" + D.teams[ti].name + "</span>" +
+            (got ? '<span class="tag tier-' + tier + '" style="margin-left:auto">placed</span>' : "") +
+            "</li>";
+        }).join("") + "</ol></div>";
+    } else {
+      html += '<div class="dsec"><h3>What they asked for</h3>' +
+        '<p class="note">They submitted no team preferences, so only the fallback round ' +
+        "could place them.</p></div>";
+    }
+
+    html += '<div class="dsec"><h3>Move them</h3><div class="movebox">' +
+      '<select id="d-move" aria-label="Move to team">' +
+        '<option value="">Choose a team…</option>' +
+        D.teams.map(function (tm, ti) {
+          return '<option value="' + ti + '"' + (ti === t ? " disabled" : "") + ">" +
+            tm.name + " (" + state.result.rosters[ti].size + "/" + state.capacities[ti] + ")" +
+            "</option>";
+        }).join("") +
+      "</select>" +
+      '<button class="btn" id="d-move-go">Move</button>' +
+      "</div>";
+    if (tier === "pinned") {
+      html += '<button class="btn" id="d-unpin" style="margin-top:8px">Release override</button>';
+    }
+    html += '<p class="note" style="margin-top:8px">Moving someone takes a seat the ' +
+      "algorithm gave to somebody else. The board will show you who.</p></div>";
+
+    $("d-body").innerHTML = html;
+
+    $("d-move-go").onclick = function () {
+      const v = $("d-move").value;
+      if (v !== "") pinTo(i, Number(v));
+    };
+    if ($("d-unpin")) $("d-unpin").onclick = function () { unpin(i); };
+  }
+
+  // ---- export --------------------------------------------------------------
+  function exportCsv() {
+    const r = state.result;
+    const rows = [["candidate_id", "name", "team", "preference_rank", "how_placed", "fit_score"]];
+    D.candidates.forEach(function (c, i) {
+      const t = r.assignedTeam[i];
+      rows.push([
+        c.id,
+        c.name,
+        t === -1 ? "UNPLACED" : D.teams[t].name,
+        r.rank[i] > 0 ? r.rank[i] : "",
+        TIER_LABEL[r.tier[i]],
+        t === -1 ? "" : E.score(i, t).toFixed(3)
+      ]);
+    });
+    const csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        const s = String(cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(",");
+    }).join("\n");
+
+    // The artifact sandbox blocks page-initiated downloads, so hand the rows
+    // over in a way that always works: copy to the clipboard, and say so.
+    navigator.clipboard.writeText(csv).then(function () {
+      state.lastChange = {
+        headline: "<strong>" + D.candidates.length +
+          " placements</strong> copied to your clipboard as CSV — paste straight into a sheet.",
+        moved: []
+      };
+      renderBanner();
+    }).catch(function () {
+      state.lastChange = {
+        headline: "Could not reach the clipboard. Run <strong>python3 -m resumatch export</strong> " +
+          "to write the same rows to a file.",
+        moved: []
+      };
+      renderBanner();
+    });
+  }
+
+  // ---- render --------------------------------------------------------------
+  function render() {
+    renderReadings();
+    renderBanner();
+    renderFilters();
+    renderPool();
+    renderTeams();
+    if (state.selected !== null) renderDrawer();
+    $("undo").disabled = state.history.length === 0;
+  }
+
+  // ---- boot ----------------------------------------------------------------
+  $("cohort-hash").textContent = D.cohortHash.slice(0, 12);
+  $("seed").textContent = String(D.seed);
+
+  rerun();
+  state.baseline = state.result;
+  render();
+
+  $("search").addEventListener("input", function (ev) {
+    state.query = ev.target.value;
+    renderPool();
+  });
+  $("undo").onclick = undo;
+  $("reset").onclick = reset;
+  $("export").onclick = exportCsv;
+  $("d-close").onclick = function () { openDrawer(false); };
+  $("scrim").onclick = function () { openDrawer(false); };
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") openDrawer(false);
+  });
+})();
+</script>

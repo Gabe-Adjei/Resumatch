@@ -1,0 +1,6 @@
+{
+  "name": "resumatch-ui",
+  "private": true,
+  "type": "module",
+  "description": "ES modules for the Resumatch frontend. No dependencies and no build step — React and htm load as UMD globals from a CDN at runtime (see app.html). This file exists so Node and editors treat these files as modules, which is what lets scripts/check_ui_render.js import them for a render smoke test."
+}

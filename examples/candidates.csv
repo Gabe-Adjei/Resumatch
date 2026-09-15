@@ -1,0 +1,15 @@
+id,name,skills,interests,preferences
+C001,Nia Ferrari,go;java;microservices;python;sql,backend,T02;T04;T03
+C002,Tobias Adeyemi,ci_cd;data_engineering;docker;machine_learning;nlp;pandas;statistics,data_ml,T03;T02;T01;T04
+C003,Dmitri Rivera,accessibility;cryptography;css;identity;javascript;rest_apis;threat_modeling,frontend;infra;security,T02;T01;T03;T04
+C004,Leah Kowalski,ci_cd;cpp;rest_apis;risk_modeling;sql,backend;quant,T02;T04;T01
+C005,Fatima Hassan,accessibility;css;javascript;python;typescript,frontend,T04;T02;T01;T03
+C006,Victor Nguyen,accessibility;css;data_engineering;javascript;react;typescript,data_ml;frontend,T03;T02;T04;T01
+C007,Ravi Aluko,ci_cd;docker;terraform,frontend;infra,T04;T01;T02
+C008,Mira Okafor,java;machine_learning;microservices;pandas;python;rest_apis;statistics,backend;data_ml,T04;T02;T03;T01
+C009,Dmitri Ortega,aws;data_engineering;docker;nlp;pandas,data_ml;infra,T03;T01;T02;T04
+C010,Bruno Haddad,docker;kotlin;react_native;swift,mobile,T02;T04;T01;T03
+C011,Lena Adeyemi,cryptography;kotlin;python;react_native;rest_apis;swift,mobile;security,T03;T02;T01;T04
+C012,Fatima Ortega,accessibility;cpp;derivatives;javascript,frontend;quant,T02;T04;T03;T01
+C013,Oscar Mora,aws;ci_cd;docker;kubernetes;terraform,infra,T01;T04;T02;T03
+C014,Aisha Nguyen,aws;ci_cd;docker;kubernetes;rest_apis;terraform,data_ml;infra,T01;T03;T02

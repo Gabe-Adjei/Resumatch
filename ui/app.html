@@ -1,0 +1,20 @@
+<title>Resumatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div id="root"></div>
+
+<!-- React and htm as UMD globals, pinned. No bundler: the app stays a single
+     shareable link, which matters more here than a module graph would. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+
+<!-- Data and engine are plain globals, shared with the standalone board. -->
+<script src="data.js"></script>
+<script src="engine.js"></script>
+
+<!-- The app itself is ES modules, served from the same origin. -->
+<script type="module" src="app.js"></script>
