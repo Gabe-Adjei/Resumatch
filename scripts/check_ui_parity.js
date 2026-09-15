@@ -79,10 +79,31 @@ pairs.forEach(([label, a, b]) => {
   console.log(`  ${ok ? "ok  " : "DIFF"} ${label.padEnd(16)} browser=${a} python=${b}`);
 });
 
-console.log("");
-if (mismatches === 0 && metricDrift === 0) {
-  console.log(`PARITY OK — ${D.candidates.length} placements identical.`);
-  process.exit(0);
-}
-console.error(`PARITY FAILED — ${mismatches} placement mismatch(es), ${metricDrift} metric diff(s).`);
-process.exit(1);
+// The browser can add a candidate at runtime, which means rebuilding the team
+// orderings locally — and that requires reproducing Python's seeded SHA-256
+// tie-break exactly. If it ever diverges, adding one person would quietly
+// reshuffle everyone else's ranking, which is the failure mode that
+// test_adding_a_candidate_does_not_reshuffle_existing_tie_breaks guards on the
+// Python side.
+(async () => {
+  const orderDrift = await E.verifyOrders();
+  console.log("");
+  if (orderDrift.length) {
+    console.error(
+      `TIE-BREAK FAILED — the browser's ordering diverges from Python in ` +
+        `${orderDrift.length} team(s), e.g. ${orderDrift[0].team} at position ${orderDrift[0].position}.`
+    );
+    process.exit(1);
+  }
+  console.log(`  ok   tie-break reproduces Python's ordering (${D.teams.length} teams)`);
+
+  console.log("");
+  if (mismatches === 0 && metricDrift === 0) {
+    console.log(`PARITY OK — ${D.candidates.length} placements identical.`);
+    process.exit(0);
+  }
+  console.error(
+    `PARITY FAILED — ${mismatches} placement mismatch(es), ${metricDrift} metric diff(s).`
+  );
+  process.exit(1);
+})();

@@ -38,6 +38,59 @@ Three things go wrong, and they are the three things this tool exists to fix:
 
 The tool has to beat a spreadsheet on all three, not just produce assignments.
 
+### Where this sits in the process
+
+**Everyone in the cohort is already hired.** This runs after offers are
+accepted and before the start date. It decides which *team* someone joins, not
+whether they get a job.
+
+That distinction drives most of the design, so it is worth being explicit
+about the three moments it could have occupied:
+
+| when | what it would be | is this it? |
+|---|---|---|
+| before interviews | matching candidates to teams for interview scheduling | no |
+| after interviews, before offers | teams deciding who gets an offer | no |
+| **after offers accepted** | **allocating a hired cohort to teams** | **yes** |
+
+You can see it in the engine, not just the framing:
+
+- **Nobody can be refused.** There is no acceptability threshold — every
+  candidate is acceptable to every team. In a selection tool, rejection is a
+  normal outcome; here it is a bug.
+- **Total seats ≥ cohort size**, always. Being unplaced is an error condition.
+- The goal metric is **return-offer conversion**, which is retention. Selection
+  tools optimize quality-of-hire instead.
+
+Two consequences worth knowing before you pitch this:
+
+1. **No one's employment is decided by an algorithm.** They already have the
+   job. That keeps this out of the regulatory territory any hiring-decision
+   tool sits in — the first thing a bank's compliance team or a university's
+   legal office will ask about.
+2. **The honesty promise is credible.** You can tell a cohort "rank truthfully,
+   it can only help you" and have it be true (§2). You could never credibly
+   say that about a tool deciding whether they get hired.
+
+If this ever moves earlier in the process, three things must change: teams need
+to be able to refuse candidates, "unplaced" becomes a normal result with an
+escalation path, and a bias review stops being optional.
+
+### The two inputs
+
+A resume gives you **skills**. It does not give you **preferences** — and the
+parser deliberately refuses to guess them (§9). So intake is two things:
+
+| input | supplies | where it comes from |
+|---|---|---|
+| resume | skills, domain interests | `intake/resume.py`, or the Add-an-intern panel |
+| preference survey | their ranked teams | a short form; `preferences` column in the CSV |
+
+Without the second one, someone can only be placed by fit into whatever still
+has room — which is exactly the "convenience beats preference" outcome the
+tool exists to prevent. The UI says so when a preference list is missing rather
+than placing them quietly.
+
 ---
 
 ## 2. Why deferred acceptance

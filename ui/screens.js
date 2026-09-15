@@ -187,7 +187,13 @@ export function Workspace({ state, dispatch }) {
         ${showReport ? html`<${Report} state=${state} />` : null}
       </section>
 
-      ${showIntake ? html`<${IntakePanel} state=${state} onClose=${() => setShowIntake(false)} />` : null}
+      ${showIntake
+        ? html`<${IntakePanel}
+            state=${state}
+            dispatch=${dispatch}
+            onClose=${() => setShowIntake(false)}
+          />`
+        : null}
     </div>
   `;
 }
@@ -485,9 +491,42 @@ PROJECTS
 INTERESTS
   Interested in backend and infrastructure work, especially platform reliability.`;
 
-function IntakePanel({ state, onClose }) {
+function IntakePanel({ state, dispatch, onClose }) {
   const [text, setText] = useState(SAMPLE_RESUME);
+  const [name, setName] = useState("");
+  // Their ranked teams, best first. This is the preference survey — the half
+  // a resume cannot tell you. Without it someone can only be placed by fit,
+  // which is exactly the "convenience over preference" outcome the tool
+  // exists to prevent, so the panel asks for it explicitly.
+  const [picks, setPicks] = useState([]);
+  const [busy, setBusy] = useState(false);
+
   const parsed = useMemo(() => parseResume(text), [text]);
+  const finalName = (name.trim() || parsed.name || "").trim();
+
+  function togglePick(ti) {
+    setPicks((current) =>
+      current.includes(ti) ? current.filter((x) => x !== ti) : current.concat([ti])
+    );
+  }
+
+  async function addToCohort() {
+    if (!finalName || busy) return;
+    setBusy(true);
+    try {
+      const index = await E.addCandidate({
+        id: "N" + String(D.candidates.length + 1).padStart(3, "0"),
+        name: finalName,
+        skills: parsed.skills,
+        interests: parsed.interests,
+        prefs: picks,
+      });
+      dispatch({ type: "added", candidate: index });
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const ranked = useMemo(() => {
     const skills = new Set(parsed.skills);
@@ -523,8 +562,10 @@ function IntakePanel({ state, onClose }) {
       <div class="sheet" role="dialog" aria-label="Add someone">
         <div class="drawer-head">
           <div>
-            <h2>Where would this person fit?</h2>
-            <div class="id">Paste a resume — we read the skills, not the name or school</div>
+            <h2>Add an intern</h2>
+            <div class="id">
+              Paste their resume for skills, then pick the teams they asked for
+            </div>
           </div>
           <button class="btn sm" onClick=${onClose}>Close</button>
         </div>
@@ -532,7 +573,22 @@ function IntakePanel({ state, onClose }) {
         <div class="sheet-body">
           <div class="sheet-cols">
             <div>
-              <label class="section-title" for="resume-text">Resume text</label>
+              <label class="section-title" for="intern-name">Name</label>
+              <input
+                class="field"
+                id="intern-name"
+                placeholder=${parsed.name || "Their name"}
+                value=${name}
+                onInput=${(e) => setName(e.target.value)}
+              />
+
+              <label
+                class="section-title"
+                for="resume-text"
+                style=${{ marginTop: "12px", display: "block" }}
+              >
+                Resume text
+              </label>
               <textarea
                 class="field"
                 id="resume-text"
@@ -588,9 +644,55 @@ function IntakePanel({ state, onClose }) {
                 `
               )}
               <p class="note" style=${{ marginTop: "10px" }}>
-                This shows which teams need these skills. Whether someone lands there also depends
-                on how many seats are left and who else applied.
+                This shows which teams need these skills. Where they actually land also depends on
+                what they ask for below, how many seats are left, and who else applied.
               </p>
+
+              <div class="picks">
+                <div class="section-title">Teams they asked for</div>
+                <p class="note" style=${{ marginBottom: "8px" }}>
+                  Click in the order they ranked them. A resume can’t tell us what someone wants —
+                  without this they can only be placed on whatever still has room.
+                </p>
+                <div class="pickgrid">
+                  ${D.teams.map((t, ti) => {
+                    const at = picks.indexOf(ti);
+                    return html`
+                      <button
+                        class="pickbtn ${at !== -1 ? "chosen" : ""}"
+                        key=${ti}
+                        aria-pressed=${at !== -1}
+                        onClick=${() => togglePick(ti)}
+                      >
+                        ${at !== -1 ? html`<span class="pickno">${at + 1}</span>` : null}
+                        ${t.name}
+                      </button>
+                    `;
+                  })}
+                </div>
+                ${picks.length
+                  ? html`<p class="note" style=${{ marginTop: "8px" }}>
+                      Their list: ${picks.map((ti) => D.teams[ti].name).join(" → ")}
+                    </p>`
+                  : html`<p class="note warn-text" style=${{ marginTop: "8px" }}>
+                      No teams picked yet — they’ll be placed on best fit only.
+                    </p>`}
+              </div>
+
+              <div class="sheet-actions">
+                <button
+                  class="btn primary"
+                  disabled=${!finalName || busy}
+                  onClick=${addToCohort}
+                >
+                  ${busy ? "Adding…" : "Add to the cohort"}
+                </button>
+                <span class="note">
+                  ${finalName
+                    ? `Adds ${finalName} and re-runs the match.`
+                    : "Enter a name first."}
+                </span>
+              </div>
             </div>
           </div>
         </div>

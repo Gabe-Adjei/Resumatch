@@ -153,8 +153,31 @@ export function reducer(state, action) {
         state,
         capacities,
         {},
-        "Back to the algorithm's own result, overrides cleared."
+        "Back to the automatic result — your moves have been cleared."
       );
+    }
+
+    case "added": {
+      // The candidate is already in the engine's cohort (see
+      // RESUMATCH.addCandidate, which is async because it has to hash the
+      // tie-break keys). This just re-runs the match and reports where they
+      // landed and who it displaced.
+      const { candidate } = action;
+      const result = E.runMatch(state.capacities, state.pins);
+      const team = result.assignedTeam[candidate];
+      const name = D.candidates[candidate].name;
+      const where =
+        team === -1
+          ? `<strong>${name}</strong> was added, but every team is full — nobody has a seat for them yet.`
+          : `<strong>${name}</strong> was added and placed on <strong>${D.teams[team].name}</strong>.`;
+
+      return Object.assign({}, state, {
+        result,
+        baseline: result, // the cohort changed, so the old baseline is not comparable
+        history: snapshot(state),
+        selected: candidate,
+        lastChange: { headline: where, moved: E.diff(state.result, result) },
+      });
     }
 
     default:

@@ -284,6 +284,33 @@ h1, h2, h3 { text-wrap: balance; }
 .sheet-cols { display: grid; gap: 20px; }
 @media (min-width: 820px) { .sheet-cols { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); } }
 
+/* ---- preference picker ---------------------------------------------------
+   The half a resume cannot supply. Clicking teams in order captures the
+   ranked list; the number badge makes the order visible so it can be read
+   back and corrected.                                                        */
+.picks { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pickgrid { display: grid; gap: 5px; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+.pickbtn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; text-align: left; padding: 6px 9px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink-2);
+}
+.pickbtn:hover { border-color: var(--ink-3); background: var(--surface-2); }
+.pickbtn.chosen { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 500; }
+.pickno {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  background: var(--accent); color: var(--accent-ink);
+  width: 16px; height: 16px; border-radius: 99px;
+  display: grid; place-items: center; flex: none;
+}
+.warn-text { color: var(--t-fallback); }
+
+.sheet-actions {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+}
+
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .btn {
   background: var(--surface); border: 1px solid var(--line-strong);

@@ -19,9 +19,10 @@
   const W = D.weights;
 
   // rankOf[t][c] = position of candidate c in team t's ordering. Lower is
-  // better. Inverted once at load; the orderings never change at runtime.
-  const rankOf = D.order.map(function (order) {
-    const inv = new Int32Array(D.candidates.length);
+  // better. Seeded from the orderings Python computed; rebuilt in place when a
+  // candidate is added at runtime (see addCandidate).
+  let rankOf = D.order.map(function (order) {
+    const inv = [];
     order.forEach(function (candIdx, position) {
       inv[candIdx] = position;
     });
@@ -59,7 +60,7 @@
     return { total, required, preferred, interest, wishlist };
   }
 
-  // Scores never change, so compute them once. 150 x 20 is nothing.
+  // Scores for the cohort as loaded. Extended when a candidate is added.
   const scoreCache = D.teams.map(function (_, t) {
     return D.candidates.map(function (_, c) {
       return fitScore(c, t).total;
@@ -68,6 +69,111 @@
 
   function score(candIdx, teamIdx) {
     return scoreCache[teamIdx][candIdx];
+  }
+
+  /* ------------------------------------------------------------------------
+   * Adding a candidate at runtime
+   *
+   * Team orderings normally come from Python (scoring.py) so the browser
+   * cannot disagree with the engine about who ranks where. A candidate added
+   * in the browser has no Python-computed position, so the ordering has to be
+   * rebuilt here — which means reproducing the seeded tie-break exactly.
+   *
+   * Python does:  sha256(f"{seed}|{team_id}|{candidate_id}").hexdigest()
+   * and sorts by (-score, that digest).
+   *
+   * `verifyOrders()` below asserts this reproduces Python's ordering for the
+   * original cohort. If it ever stops matching, adding a person would quietly
+   * reshuffle everyone else — so the check is not optional.
+   * --------------------------------------------------------------------- */
+
+  const tiebreak = {}; // "teamIdx:candIdx" -> hex digest
+
+  async function sha256Hex(text) {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest))
+      .map(function (b) {
+        return b.toString(16).padStart(2, "0");
+      })
+      .join("");
+  }
+
+  async function ensureTiebreaks() {
+    const jobs = [];
+    for (let t = 0; t < D.teams.length; t++) {
+      for (let c = 0; c < D.candidates.length; c++) {
+        const key = t + ":" + c;
+        if (tiebreak[key] !== undefined) continue;
+        jobs.push(
+          sha256Hex(D.matchSeed + "|" + D.teams[t].id + "|" + D.candidates[c].id).then(
+            function (hex) {
+              tiebreak[key] = hex;
+            }
+          )
+        );
+      }
+    }
+    await Promise.all(jobs);
+  }
+
+  function rebuildOrders() {
+    rankOf = D.teams.map(function (_, t) {
+      const ids = D.candidates.map(function (_, c) {
+        return c;
+      });
+      ids.sort(function (a, b) {
+        const diff = scoreCache[t][b] - scoreCache[t][a];
+        if (diff !== 0) return diff;
+        return tiebreak[t + ":" + a] < tiebreak[t + ":" + b] ? -1 : 1;
+      });
+      const inv = [];
+      ids.forEach(function (candIdx, position) {
+        inv[candIdx] = position;
+      });
+      D.order[t] = ids;
+      return inv;
+    });
+  }
+
+  /** Does the JS tie-break reproduce Python's ordering? Used by the parity check. */
+  async function verifyOrders() {
+    const original = D.order.map(function (o) {
+      return o.slice();
+    });
+    await ensureTiebreaks();
+    rebuildOrders();
+    const mismatches = [];
+    for (let t = 0; t < D.teams.length; t++) {
+      for (let i = 0; i < original[t].length; i++) {
+        if (original[t][i] !== D.order[t][i]) {
+          mismatches.push({ team: D.teams[t].id, position: i });
+          break;
+        }
+      }
+    }
+    return mismatches;
+  }
+
+  /**
+   * Add a candidate to the cohort and return their index.
+   *
+   * `candidate` is {id, name, skills[], interests[], prefs[teamIdx]} — the
+   * same shape as the entries in data.js.
+   */
+  async function addCandidate(candidate) {
+    if (D.candidates.some((c) => c.id === candidate.id)) {
+      throw new Error("a candidate with id " + candidate.id + " is already in the cohort");
+    }
+    const index = D.candidates.length;
+    D.candidates.push(candidate);
+
+    for (let t = 0; t < D.teams.length; t++) {
+      scoreCache[t][index] = fitScore(index, t).total;
+    }
+    await ensureTiebreaks();
+    rebuildOrders();
+    return index;
   }
 
   /**
@@ -338,7 +444,11 @@
     diff,
     fitScore,
     score,
-    rankOf,
+    addCandidate,
+    verifyOrders,
     LOW_FIT_THRESHOLD,
+    get rankOf() {
+      return rankOf;
+    },
   };
 })(window);
