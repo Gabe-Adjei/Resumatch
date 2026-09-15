@@ -134,18 +134,155 @@ h1, h2, h3 { text-wrap: balance; }
 .brand .sub { color: var(--ink-3); margin: 3px 0 0; font-size: 12.5px; }
 .brand .sub code { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
 
-.nav {
-  display: flex; gap: 2px; margin: 16px 0 18px;
-  border-bottom: 1px solid var(--line); flex-wrap: wrap;
+/* ---- status: the first thing anyone reads -------------------------------- */
+.status { margin-top: 18px; }
+.status-line {
+  font-family: var(--display); font-size: 19px; font-weight: 600;
+  letter-spacing: -.012em; margin: 0; line-height: 1.35; max-width: 62ch;
 }
-.nav a {
-  font-family: var(--display); font-size: 13px; font-weight: 600;
-  padding: 8px 14px; color: var(--ink-3); text-decoration: none;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  letter-spacing: .005em; white-space: nowrap;
+.status-sub {
+  margin: 6px 0 0; font-size: 12.5px; color: var(--ink-3);
+  max-width: 68ch; line-height: 1.5;
 }
-.nav a:hover { color: var(--ink); }
-.nav a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- attention: the one thing that wants a decision ---------------------- */
+.attention {
+  display: flex; flex-wrap: wrap; gap: 12px 20px;
+  align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--t-fallback);
+  border-radius: var(--radius); padding: 13px 16px;
+}
+.attention h2 {
+  font-family: var(--display); font-size: 15px; font-weight: 600; margin: 0 0 3px;
+}
+.attention p { margin: 0; font-size: 12.5px; color: var(--ink-3); max-width: 64ch; line-height: 1.5; }
+
+/* ---- controls ------------------------------------------------------------ */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.controls .search { flex: 1; min-width: 220px; max-width: 460px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+.section-bar {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.section-bar h2 {
+  font-family: var(--display); font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); margin: 0;
+}
+
+/* ---- search results ------------------------------------------------------ */
+.result-list { max-height: 460px; overflow-y: auto; }
+.pline {
+  display: grid; grid-template-columns: 22px 1fr; align-items: center;
+  border-bottom: 1px solid var(--line); background: var(--surface);
+}
+.pline:last-child { border-bottom: 0; }
+.pline:hover { background: var(--surface-2); }
+.pline.dragging { opacity: .4; }
+.pline .grip {
+  font-size: 12px; color: var(--ink-3); text-align: center;
+  cursor: grab; user-select: none; line-height: 1;
+}
+.pline .grip:active { cursor: grabbing; }
+.pline-main {
+  display: flex; flex-direction: column; gap: 1px; align-items: flex-start;
+  background: none; border: 0; padding: 8px 12px 8px 2px; width: 100%; text-align: left;
+}
+.pline .nm { font-weight: 500; font-size: 13px; }
+.pline .mt { font-size: 11.5px; color: var(--ink-3); }
+
+/* ---- team tiles ----------------------------------------------------------
+   Collapsed by default. The previous version expanded all twenty teams at
+   once, which put ~150 names on screen and read as a wall. One level at a
+   time: tile -> roster -> person.                                           */
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); }
+.tile {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+  transition: border-color .12s, box-shadow .12s;
+}
+.tile.expanded { border-color: var(--line-strong); box-shadow: var(--shadow); grid-column: 1 / -1; }
+.tile.drop-target { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+.tile-head {
+  display: block; width: 100%; text-align: left; background: none; border: 0;
+  padding: 11px 13px 12px;
+}
+.tile-head:hover { background: var(--surface-2); }
+.tile-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.tile-name { font-family: var(--display); font-size: 13.5px; font-weight: 600; }
+.tile-count {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap;
+}
+.fill {
+  display: block; height: 5px; border-radius: 99px;
+  background: var(--surface-3); margin: 8px 0 6px; overflow: hidden;
+}
+.fill-bar { display: block; height: 100%; background: var(--t-ranked); border-radius: 99px; }
+.tile-sub {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  font-size: 11.5px; color: var(--ink-3);
+}
+.flag {
+  font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 99px;
+  background: var(--t-fallback-bg); color: var(--t-fallback);
+}
+
+.tile-body { border-top: 1px solid var(--line); padding: 11px 13px 13px; }
+.tile-needs { margin: 0 0 9px; }
+.tile-needs b { color: var(--ink-2); font-weight: 500; }
+.roster { display: grid; gap: 2px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.rmember {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 5px 8px; border: 0; border-radius: 4px; background: transparent;
+  font-size: 12.5px; text-align: left; width: 100%;
+}
+.rmember:hover { background: var(--surface-2); }
+.rmember .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rmember .meta { display: flex; gap: 8px; align-items: center; flex: none; }
+.rmember .how { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.rmember .pct {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums; min-width: 34px; text-align: right;
+}
+.tile-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line);
+}
+
+/* ---- report (collapsed by default) --------------------------------------- */
+.report-toggle {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  width: 100%; background: none; border: 0; padding: 12px 14px; text-align: left;
+  font-family: var(--display); font-size: 13px; font-weight: 600; flex-wrap: wrap;
+}
+.report-toggle:hover { background: var(--surface-2); }
+.report { border-top: 1px solid var(--line); }
+.report-grid { display: grid; gap: 22px; }
+@media (min-width: 860px) { .report-grid { grid-template-columns: 1fr 1fr; } }
+.report-foot {
+  margin-top: 18px; padding: 11px 13px; border-radius: var(--radius);
+  background: var(--accent-soft); font-size: 12.5px; line-height: 1.5;
+}
+.report-foot.warn { background: var(--t-fallback-bg); }
+.report-foot .note { display: block; margin-top: 6px; }
+
+/* ---- intake sheet -------------------------------------------------------- */
+.overlay { position: fixed; inset: 0; z-index: 50; }
+.sheet {
+  position: absolute; inset: auto 0 0 0; max-height: 92vh;
+  margin: 0 auto; max-width: 1080px;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -8px 34px rgba(0, 0, 0, .18);
+  display: flex; flex-direction: column;
+}
+.sheet-body { overflow-y: auto; padding: 14px 16px 24px; }
+.sheet-cols { display: grid; gap: 20px; }
+@media (min-width: 820px) { .sheet-cols { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); } }
 
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .btn {

@@ -103,44 +103,44 @@ function check(label, fn, mustContain) {
   }
 }
 
-console.log("Rendering screens:");
+console.log("Rendering:");
 
 const dash = check(
-  "Overview",
-  () => render(React.createElement(screens.Dashboard, { state, dispatch })),
-  ["First choice", "STABLE", "Most oversubscribed", "Preference rank achieved"]
-);
-
-check(
-  "Board",
-  () => render(React.createElement(screens.Board, { state, dispatch })),
-  ["Cohort", "needs", "open seat"]
-);
-
-check(
-  "Teams",
-  () => render(React.createElement(screens.Teams, { state, dispatch })),
-  ["filled", "Intern"]
-);
-
-check(
-  "Intake",
-  () => render(React.createElement(screens.Intake, { state, dispatch })),
-  ["Paste a resume", "Skills found", "Best-fit teams", "Fit is not a prediction"]
+  "Workspace",
+  () => render(React.createElement(screens.Workspace, { state, dispatch })),
+  ["have a seat", "Teams", "second look", "Numbers for your report"]
 );
 
 check(
   "Candidate drawer",
-  () =>
-    render(
-      React.createElement(CandidateDrawer, { index: 0, state, dispatch })
-    ),
-  ["Outcome", "What they asked for", "Move them"]
+  () => render(React.createElement(CandidateDrawer, { index: 0, state, dispatch })),
+  ["Where they landed", "Teams they asked for", "Move them somewhere else"]
 );
+
+// Plain language is a product requirement, not a preference: this screen is
+// read by recruiters and shown to interns. The engine's vocabulary belongs in
+// the collapsed report section, not on the surface.
+console.log("\nPlain language:");
+const JARGON = [
+  "blocking pair",
+  "deferred acceptance",
+  "preference_rank",
+  "top_choice",
+  "fallback",
+  "tier",
+  "cohort_hash",
+];
+const leaked = JARGON.filter((word) => dash.toLowerCase().includes(word.toLowerCase()));
+if (leaked.length) {
+  failures++;
+  console.log(`  FAIL jargon on the default screen: ${leaked.join(", ")}`);
+} else {
+  console.log("  ok   no engine jargon on the default screen");
+}
 
 // The `class` question, asserted rather than assumed.
 console.log("\nProp handling:");
-if (/class="reading/.test(dash)) {
+if (/class="tile/.test(dash)) {
   console.log("  ok   `class` renders as a real class attribute");
 } else {
   failures++;

@@ -1,34 +1,20 @@
-// Root component: state, routing, chrome.
+// Root component: state, chrome, and one screen.
+//
+// There is deliberately no router. An earlier version had four tabs
+// (Overview / Board / Teams / Intake) and the navigation itself was the main
+// source of confusion — abstract names, no obvious starting point, and two
+// tabs showing the same rosters. Collapsing to a single workspace removed the
+// problem rather than relabelling it.
 
-import React, { html, useEffect, useReducer, useState } from "./h.js";
+import React, { html, useEffect, useReducer } from "./h.js";
 import { createInitialState, reducer, isTouched, toCsv } from "./store.js";
-import { Dashboard, Board, Teams, Intake } from "./screens.js";
+import { Workspace } from "./screens.js";
 import { CandidateDrawer } from "./drawer.js";
 
 const D = window.RESUMATCH_DATA;
 
-const ROUTES = [
-  ["#/", "Overview", Dashboard],
-  ["#/board", "Board", Board],
-  ["#/teams", "Teams", Teams],
-  ["#/intake", "Intake", Intake],
-];
-
-/** Hash routing — no router dependency, and it survives a republish. */
-function useHashRoute() {
-  const [hash, setHash] = useState(window.location.hash || "#/");
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash || "#/");
-    window.addEventListener("hashchange", onChange);
-    return () => window.removeEventListener("hashchange", onChange);
-  }, []);
-  return ROUTES.some((r) => r[0] === hash) ? hash : "#/";
-}
-
 function App() {
   const [state, dispatch] = useReducer(reducer, null, createInitialState);
-  const route = useHashRoute();
-  const Screen = (ROUTES.find((r) => r[0] === route) || ROUTES[0])[2];
 
   useEffect(() => {
     const onKey = (ev) => {
@@ -47,16 +33,15 @@ function App() {
         dispatch({
           type: "note",
           headline:
-            `<strong>${D.candidates.length} placements</strong> copied to your clipboard as ` +
-            `CSV — paste straight into a sheet.`,
+            `Copied all ${D.candidates.length} placements. Paste straight into a spreadsheet.`,
         })
       )
       .catch(() =>
         dispatch({
           type: "note",
           headline:
-            "Could not reach the clipboard. Run <strong>python3 -m resumatch export</strong> " +
-            "to write the same rows to a file.",
+            "Couldn’t reach the clipboard — your browser blocked it. Try again, or run " +
+            "<strong>python3 -m resumatch export</strong> to write a file instead.",
         })
       );
   }
@@ -66,40 +51,31 @@ function App() {
       <div class="app">
         <header class="masthead">
           <div class="brand">
-            <h1>Resumatch</h1>
+            <h1>Summer 2026 Placement</h1>
             <p class="sub">
-              Summer 2026 tech cohort · ${D.candidates.length} interns · ${D.teams.length} teams ·
-              synthetic data · cohort <code>${D.cohortHash.slice(0, 12)}</code>
+              ${D.candidates.length} interns · ${D.teams.length} teams · example data
             </p>
           </div>
           <div class="toolbar">
-            <button class="btn" disabled=${!state.history.length} onClick=${() => dispatch({ type: "undo" })}>
+            <button
+              class="btn"
+              disabled=${!state.history.length}
+              onClick=${() => dispatch({ type: "undo" })}
+            >
               Undo
             </button>
-            <button class="btn" disabled=${!isTouched(state)} onClick=${() => dispatch({ type: "reset" })}>
-              Reset to algorithm
+            <button
+              class="btn"
+              disabled=${!isTouched(state)}
+              onClick=${() => dispatch({ type: "reset" })}
+            >
+              Start over
             </button>
-            <button class="btn primary" onClick=${exportCsv}>Export CSV</button>
+            <button class="btn primary" onClick=${exportCsv}>Copy as spreadsheet</button>
           </div>
         </header>
 
-        <nav class="nav" aria-label="Screens">
-          ${ROUTES.map(
-            ([path, label]) => html`
-              <a key=${path} href=${path} aria-current=${route === path ? "page" : undefined}>
-                ${label}
-              </a>
-            `
-          )}
-        </nav>
-
-        <${Screen} state=${state} dispatch=${dispatch} />
-
-        <footer class="foot">
-          <span>Candidate-proposing deferred acceptance (Gale–Shapley), capacities per team.</span>
-          <span>Team rankings computed by <code>resumatch/scoring.py</code>.</span>
-          <span>Drag anyone onto a team to override — the board shows what it costs.</span>
-        </footer>
+        <${Workspace} state=${state} dispatch=${dispatch} />
       </div>
 
       <${CandidateDrawer} index=${state.selected} state=${state} dispatch=${dispatch} />

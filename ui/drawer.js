@@ -6,7 +6,7 @@
 // number behind a claim, it does not belong on this screen.
 
 import { html } from "./h.js";
-import { TIER_LABEL } from "./store.js";
+import { matchPct, ordinal } from "./labels.js";
 import { pretty } from "./taxonomy.js";
 
 const D = window.RESUMATCH_DATA;
@@ -21,21 +21,21 @@ function verdictFor(index, result) {
 
   if (tier === "pinned") {
     return html`<${"span"}>
-      <b>${teamName}</b> — placed here by a person, not by the algorithm.
-      ${rank > 0
-        ? ` It was their #${rank} choice.`
-        : " They had not ranked this team."}
+      On <b>${teamName}</b> because you put them there.
+      ${rank > 0 ? ` It was their ${ordinal(rank)} pick.` : " They hadn’t asked for this team."}
     <//>`;
   }
-  if (tier === "top_choice") return html`<span><b>${teamName}</b> — their first choice.</span>`;
-  if (tier === "ranked") return html`<span><b>${teamName}</b> — their #${rank} choice.</span>`;
+  if (tier === "top_choice") return html`<span>Got their first pick: <b>${teamName}</b>.</span>`;
+  if (tier === "ranked") {
+    return html`<span>On <b>${teamName}</b> — their ${ordinal(rank)} pick.</span>`;
+  }
   if (tier === "fallback") {
     return html`<span>
-      <b>${teamName}</b>. None of the ${c.prefs.length} team${c.prefs.length === 1 ? "" : "s"}
-      they ranked had a seat left once every team filled its headcount.
+      On <b>${teamName}</b>. Every team they asked for was full by the time it came to them, so
+      they went to the team that fit them best out of what was left.
     </span>`;
   }
-  return html`<span>Not placed — every team is at capacity.</span>`;
+  return html`<span>No seat yet — every team is full.</span>`;
 }
 
 export function CandidateDrawer({ index, state, dispatch }) {
@@ -78,18 +78,18 @@ function DrawerContents({ index, state, dispatch, onClose }) {
 
       <div class="drawer-body">
         <div class="dsec">
-          <h3>Outcome</h3>
+          <h3>Where they landed</h3>
           <p class="verdict">${verdictFor(index, result)}</p>
           ${tier !== "unplaced" && tier !== "pinned"
             ? html`<p class="note">
-                No team they ranked above this one would have taken them over someone it
-                actually placed. That is what makes the result defensible.
+                Every team they wanted more than this one was already full of people those teams
+                rated higher. That is the answer if they ask why.
               </p>`
             : null}
           ${tier === "pinned"
             ? html`<p class="note">
-                Manual overrides are recorded separately from algorithmic placements, so this
-                stays visible as a human decision.
+                This was your call, not the system’s — and it stays labelled that way so nobody
+                mistakes it for an automatic result.
               </p>`
             : null}
         </div>
@@ -97,21 +97,23 @@ function DrawerContents({ index, state, dispatch, onClose }) {
         ${rejections.length
           ? html`
               <div class="dsec">
-                <h3>Teams that could not take them</h3>
+                <h3>Teams that didn’t have room</h3>
                 <ul class="rejlist">
                   ${rejections.map(
                     (r) => html`
                       <li key=${r.team}>
                         <span class="t">${D.teams[r.team].name}</span><br />
                         <span class="n">
-                          filled with ${r.heldAbove} candidate${r.heldAbove === 1 ? "" : "s"}
-                          it scored higher · their fit ${r.yourScore.toFixed(2)}
-                          ${r.cutoff !== null ? ` vs cutoff ${r.cutoff.toFixed(2)}` : ""}
+                          filled up with ${r.heldAbove}
+                          ${r.heldAbove === 1 ? "person" : "people"} this team rated higher
                         </span>
                       </li>
                     `
                   )}
                 </ul>
+                <p class="note" style=${{ marginTop: "8px" }}>
+                  Listed in the order they asked for them.
+                </p>
               </div>
             `
           : null}
@@ -119,20 +121,20 @@ function DrawerContents({ index, state, dispatch, onClose }) {
         ${fit
           ? html`
               <div class="dsec">
-                <h3>Fit with ${teamName} · ${fit.total.toFixed(2)}</h3>
+                <h3>How well they fit ${teamName} · ${matchPct(fit.total)}</h3>
                 ${fit.total === 0
                   ? html`<p class="note">
-                      Their skills do not overlap with this team's stated requirements. They are
-                      here because the team still had headcount when their higher choices filled.
-                      Worth a word with the manager before this is final.
+                      This team didn’t ask for any of the skills they have. They’re here because
+                      the team still had room when the teams they wanted filled up. Worth a word
+                      with the manager before this is final.
                     </p>`
                   : null}
                 <div class="bars">
                   ${[
-                    ["Required skills", fit.required],
-                    ["Preferred skills", fit.preferred],
-                    ["Interest overlap", fit.interest],
-                    ["Manager wishlist", fit.wishlist],
+                    ["Skills they need", fit.required],
+                    ["Skills they’d like", fit.preferred],
+                    ["Shared interests", fit.interest],
+                    ["Manager asked for them", fit.wishlist],
                   ].map(
                     ([label, value]) => html`
                       <div class="bar-row" key=${label}>
@@ -148,7 +150,7 @@ function DrawerContents({ index, state, dispatch, onClose }) {
               </div>
 
               <div class="dsec">
-                <h3>Skills</h3>
+                <h3>What they bring</h3>
                 <div class="pillrow">
                   ${c.skills.map(
                     (s) => html`<span class="pill ${required.indexOf(s) !== -1 ? "match" : ""}" key=${s}>
@@ -156,12 +158,15 @@ function DrawerContents({ index, state, dispatch, onClose }) {
                     </span>`
                   )}
                 </div>
+                <p class="note" style=${{ marginTop: "7px" }}>
+                  Highlighted ones are what this team asked for.
+                </p>
               </div>
             `
           : null}
 
         <div class="dsec">
-          <h3>What they asked for</h3>
+          <h3>Teams they asked for</h3>
           ${c.prefs.length
             ? html`
                 <ol class="ranklist">
@@ -179,12 +184,12 @@ function DrawerContents({ index, state, dispatch, onClose }) {
                 </ol>
               `
             : html`<p class="note">
-                They submitted no team preferences, so only the fallback round could place them.
+                They didn’t submit any team preferences, so we could only place them by fit.
               </p>`}
         </div>
 
         <div class="dsec">
-          <h3>Move them</h3>
+          <h3>Move them somewhere else</h3>
           <${MoveControl} index=${index} state=${state} dispatch=${dispatch} />
           ${tier === "pinned"
             ? html`<button
@@ -192,12 +197,11 @@ function DrawerContents({ index, state, dispatch, onClose }) {
                 style=${{ marginTop: "8px" }}
                 onClick=${() => dispatch({ type: "unpin", candidate: index })}
               >
-                Release override
+                Undo this move
               </button>`
             : null}
           <p class="note" style=${{ marginTop: "8px" }}>
-            Moving someone takes a seat the algorithm gave to somebody else. The board will show
-            you who.
+            Moving someone takes a seat from whoever had it. You’ll see who, right after.
           </p>
         </div>
       </div>
