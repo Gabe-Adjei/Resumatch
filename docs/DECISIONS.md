@@ -258,7 +258,7 @@ on backend, data and infra requirements alike.
 
 A generator that makes the problem look easy produces a demo that is a lie, and
 a matcher tuned against it would be tuned against fiction. Current settings
-land at 45–70% first choice and 90–98% top three, which is where a real
+land at 60–75% first choice and 90–99% top three, which is where a real
 oversubscribed cohort sits.
 
 ---

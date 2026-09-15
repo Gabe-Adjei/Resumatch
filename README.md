@@ -323,7 +323,7 @@ candidate overlaps the team's domain or they don't.
 | metric | healthy | what it means if it's off |
 |---|---|---|
 | placement rate | 100% | below means total slots < cohort size |
-| first choice | 45–70% | **~99% means the generator's popularity skew isn't biting** — the scenario is unrealistically easy and the demo is misleading |
+| first choice | 60–75% | **~99% means the generator's popularity skew isn't biting** — the scenario is unrealistically easy and the demo is misleading |
 | top three | 90–98% | |
 | blocking pairs | 0 | anything else is a bug, or a manual override (§10) |
 | fallback | a handful | zero means the fallback path is dead code and untested |

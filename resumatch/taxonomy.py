@@ -27,10 +27,13 @@ Candidate or Team is broken even if it runs.
 
 PORTING THIS TO A NEW ORG
 -------------------------
-Replace the contents of SKILL_DEFS. The taxonomy is data, not logic: a bank's
-vocabulary (murex, fix protocol, kdb) and a university's (matlab, labview) are
-different sets, but nothing downstream changes. Keep the shape and the domain
-tags and the rest of the pipeline is untouched.
+Replace the contents of SKILL_DEFS. The taxonomy is data, not logic: a product
+company's vocabulary is not a bank's (murex, fix protocol, kdb) and neither is
+a research lab's (matlab, labview, cuda), but nothing downstream changes. Keep
+the shape and the domain tags and the rest of the pipeline is untouched.
+
+The set below is a general software org: backend, data/ML, frontend, infra,
+systems, mobile, security.
 """
 
 from __future__ import annotations
@@ -45,7 +48,7 @@ DOMAINS = (
     "data_ml",
     "frontend",
     "infra",
-    "quant",
+    "systems",
     "mobile",
     "security",
 )
@@ -67,6 +70,7 @@ SKILL_DEFS: dict[str, tuple[str, tuple[str, ...]]] = {
     "statistics": ("data_ml", ("stats", "statistical modeling", "regression", "probability")),
     "pandas": ("data_ml", ("numpy", "scipy", "dataframes")),
     "nlp": ("data_ml", ("natural language processing", "llm", "transformers")),
+    "time_series": ("data_ml", ("forecasting", "arima", "anomaly detection")),
     # frontend
     "javascript": ("frontend", ("js", "es6", "ecmascript")),
     "typescript": ("frontend", ("ts",)),
@@ -79,11 +83,11 @@ SKILL_DEFS: dict[str, tuple[str, tuple[str, ...]]] = {
     "docker": ("infra", ("containers", "containerization")),
     "ci_cd": ("infra", ("ci/cd", "jenkins", "github actions", "continuous integration")),
     "terraform": ("infra", ("iac", "infrastructure as code", "cloudformation")),
-    # quant
-    "derivatives": ("quant", ("options pricing", "fixed income", "structured products")),
-    "time_series": ("quant", ("forecasting", "arima", "signal processing")),
-    "cpp": ("quant", ("c++", "cplusplus", "low latency")),
-    "risk_modeling": ("quant", ("var", "value at risk", "stress testing", "credit risk")),
+    # systems
+    "cpp": ("systems", ("c++", "cplusplus", "low latency")),
+    "rust": ("systems", ("rustlang", "memory safety", "borrow checker")),
+    "concurrency": ("systems", ("multithreading", "threads", "parallelism", "async")),
+    "performance": ("systems", ("profiling", "optimization", "benchmarking", "latency tuning")),
     # mobile
     "swift": ("mobile", ("ios", "swiftui", "objective-c")),
     "kotlin": ("mobile", ("android", "jetpack compose")),
@@ -108,7 +112,7 @@ DOMAIN_PHRASES: dict[str, tuple[str, ...]] = {
     "data_ml": ("data science", "machine learning", "analytics", "artificial intelligence", "ai"),
     "frontend": ("frontend", "front-end", "ui engineering", "user interface", "web development"),
     "infra": ("infrastructure", "devops", "site reliability", "sre", "cloud", "platform reliability"),
-    "quant": ("quantitative", "trading", "pricing", "financial engineering", "markets"),
+    "systems": ("systems programming", "low level", "performance engineering", "compilers", "operating systems"),
     "mobile": ("mobile", "ios development", "android development", "app development"),
     "security": ("security", "cybersecurity", "infosec", "privacy", "application security"),
 }

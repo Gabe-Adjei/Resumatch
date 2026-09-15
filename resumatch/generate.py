@@ -43,13 +43,50 @@ LAST_NAMES = (
     "Bakker Rahman Castillo Jensen Aluko Moreau Serrano Kim Fischer"
 ).split()
 
-TEAM_PREFIXES = (
-    "Payments Risk Platform Trading Fraud Lending Markets Treasury Wealth "
-    "Custody Onboarding Clearing Pricing Compliance Ledger Settlement Advisory "
-    "Liquidity Reporting Mortgage"
-).split()
+# Product areas at a general software org, each mapped to the domains it would
+# plausibly hire for. Deliberately generic rather than industry-specific — the
+# cohort should read as "a tech division", not as a bank or a named company, so
+# the demo does not quietly imply a customer we do not have.
+#
+# The mapping is not decoration. Drawing a team's domains at random produces
+# combinations like "Observability Core — needs css, typescript", which any
+# reader with priors about the area immediately clocks as fake. A demo whose
+# data is visibly nonsense undermines the result it is trying to show, so team
+# names and skill requirements have to agree.
+TEAM_AREAS = {
+    "Search": ("data_ml", "backend"),
+    "Identity": ("security", "backend"),
+    "Growth": ("data_ml", "frontend"),
+    "Messaging": ("backend", "mobile"),
+    "Storage": ("infra", "systems"),
+    "Notifications": ("backend", "mobile"),
+    "Checkout": ("frontend", "backend"),
+    "Media": ("systems", "frontend"),
+    "Recommendations": ("data_ml", "backend"),
+    "Billing": ("backend", "data_ml"),
+    "Observability": ("infra", "systems"),
+    "Developer": ("infra", "systems"),
+    "Content": ("frontend", "backend"),
+    "Commerce": ("backend", "frontend"),
+    "Streaming": ("systems", "infra"),
+    "Onboarding": ("frontend", "mobile"),
+    "Compute": ("infra", "systems"),
+    "Payments": ("backend", "security"),
+    "Maps": ("data_ml", "mobile"),
+    "Accounts": ("security", "backend"),
+}
 
-TEAM_SUFFIXES = ("Core", "Engineering", "Systems", "Analytics", "Infrastructure", "Experience")
+TEAM_PREFIXES = tuple(TEAM_AREAS)
+
+TEAM_SUFFIXES = (
+    "Core",
+    "Platform",
+    "Engineering",
+    "Infrastructure",
+    "Experience",
+    "Services",
+    "Tools",
+)
 
 # Total slots slightly exceed cohort size: the process is feasible but tight,
 # which is what makes the fallback round exercise instead of sitting dead.
@@ -125,15 +162,18 @@ def generate_cohort(
     slots_remaining = int(n_candidates * CAPACITY_HEADROOM)
     for i in range(n_teams):
         while True:
-            name = f"{rng.choice(TEAM_PREFIXES)} {rng.choice(TEAM_SUFFIXES)}"
+            prefix = rng.choice(TEAM_PREFIXES)
+            name = f"{prefix} {rng.choice(TEAM_SUFFIXES)}"
             if name not in used_names:
                 used_names.add(name)
                 break
 
-        primary = rng.choice(DOMAINS)
-        tags = {primary}
+        # Domains come from the team's product area, not from the whole set, so
+        # requirements match the name on the card.
+        area = TEAM_AREAS[prefix]
+        tags = {rng.choice(area)}
         if rng.random() < 0.35:
-            tags.add(rng.choice(DOMAINS))
+            tags.add(area[1] if len(area) > 1 else area[0])
 
         skill_pool = sorted({s for d in tags for s in SKILLS_BY_DOMAIN[d]})
         rng.shuffle(skill_pool)
